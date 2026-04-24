@@ -1,7 +1,7 @@
 import unittest
 from htmlnode import HTMLNode, LeafNode, ParentNode
 from textnode import TextNode, TextType
-from helpers import text_node_to_html_node, split_nodes_delimiter
+from helpers import text_node_to_html_node, extract_markdown_images, extract_markdown_links
 
 class TestHTMLNode(unittest.TestCase):
     def test_to_html_props(self):
@@ -81,33 +81,15 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(html_node.tag, None)
         self.assertEqual(html_node.value, "This is a text node")
 
-    # Split segments
+    # Pull images and links out of text
 
-    def test_split_bold(self):
-        node = TextNode("This is a **text** node", TextType.TEXT)
-        nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-        self.assertEqual(nodes[0].text_type, TextType.TEXT)
-        self.assertEqual(nodes[1].text_type, TextType.BOLD)
-        self.assertEqual(nodes[2].text_type, TextType.TEXT)
+    def test_grab_image(self):
+        image_tuples = extract_markdown_images("This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)")
+        self.assertListEqual([("rick roll", "https://i.imgur.com/aKaOqIh.gif"), ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")], image_tuples)
 
-    def test_split_italic(self):
-        node = TextNode("This is a _text_ node", TextType.TEXT)
-        nodes = split_nodes_delimiter([node], "_", TextType.ITALIC)
-        self.assertEqual(nodes[0].text_type, TextType.TEXT)
-        self.assertEqual(nodes[1].text_type, TextType.ITALIC)
-        self.assertEqual(nodes[2].text_type, TextType.TEXT)
-
-    def test_split_code(self):
-        node = TextNode("This is a `text` node", TextType.TEXT)
-        nodes = split_nodes_delimiter([node], "`", TextType.CODE)
-        self.assertEqual(nodes[0].text_type, TextType.TEXT)
-        self.assertEqual(nodes[1].text_type, TextType.CODE)
-        self.assertEqual(nodes[2].text_type, TextType.TEXT)
-
-    def test_split_one_code_delimiter(self):
-        node = TextNode("This is a `text node", TextType.TEXT)
-        with self.assertRaises(ValueError) as error: split_nodes_delimiter([node], "`", TextType.CODE)
-        self.assertEqual(f"{error.exception}", "Invalid Markdown syntax")
+    def test_grab_links(self):
+        link_tuples = extract_markdown_links("This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)")
+        self.assertListEqual([("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")], link_tuples)
 
 if __name__ == "__main__":
     unittest.main()
