@@ -25,15 +25,18 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         if old_node.text_type != TextType.TEXT: # Don't process it if it's already a specific non-text type
             new_nodes.append(old_node)
         else: # Time to split
-            split_node_pieces = old_node.text.split(delimiter)
-            if len(split_node_pieces) == 1: # No instances of the delimiter
-                new_nodes.append(old_node)
-            elif len(split_node_pieces) % 2 == 0: # Only one instance of the delimiter
+            split_strings = old_node.text.split(delimiter)
+            split_nodes = []
+            if len(split_strings) % 2 == 0: # Mismatched number of delimiters
                 raise ValueError("Invalid Markdown syntax")
-            else:
-                new_nodes.append(TextNode(split_node_pieces[0], TextType.TEXT))
-                new_nodes.append(TextNode(split_node_pieces[1], text_type))
-                new_nodes.append(TextNode(split_node_pieces[2], TextType.TEXT))
+            for i in range(len(split_strings)):
+                if split_strings[i] == "":
+                    continue # Nothing to parse
+                if i % 2 == 0:
+                    split_nodes.append(TextNode(split_strings[i], TextType.TEXT))
+                else:
+                    split_nodes.append(TextNode(split_strings[i], text_type))
+            new_nodes.extend(split_nodes)
 
     return new_nodes
 

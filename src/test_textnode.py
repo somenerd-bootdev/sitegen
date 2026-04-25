@@ -51,6 +51,20 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(nodes[1].text_type, TextType.CODE)
         self.assertEqual(nodes[2].text_type, TextType.TEXT)
 
+    def test_split_code_double(self):
+        node = TextNode("This is a `text` `node`", TextType.TEXT)
+        nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertEqual(nodes[0].text_type, TextType.TEXT)
+        self.assertEqual(nodes[1].text_type, TextType.CODE)
+        self.assertEqual(nodes[2].text_type, TextType.TEXT)
+
+    def test_split_code_multi_word(self):
+        node = TextNode("This is a `text node`, I guess", TextType.TEXT)
+        nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertEqual(nodes[0].text_type, TextType.TEXT)
+        self.assertEqual(nodes[1].text_type, TextType.CODE)
+        self.assertEqual(nodes[2].text_type, TextType.TEXT)
+
     def test_split_one_code_delimiter(self):
         node = TextNode("This is a `text node", TextType.TEXT)
         with self.assertRaises(ValueError) as error: split_nodes_delimiter([node], "`", TextType.CODE)
