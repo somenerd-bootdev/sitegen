@@ -1,6 +1,7 @@
 import re
-from htmlnode import LeafNode
+from htmlnode import LeafNode, ParentNode
 from textnode import TextNode, TextType
+from blocktypes import BlockType, block_to_block_type, markdown_to_blocks
 
 def text_node_to_html_node(text_node): 
     match text_node.text_type:
@@ -114,3 +115,89 @@ def text_to_textnodes(text):
     nodes = split_nodes_link(nodes)
 
     return nodes
+
+# Markdown to HTML
+
+def text_to_children(text:str) -> list[LeafNode]:
+    result = []
+    textnodes = text_to_textnodes(text)
+    for textnode in textnodes:
+        result.append(text_node_to_html_node(textnode))
+    return result
+
+def markdown_to_html_node(markdown: str):
+    blocks = markdown_to_blocks(markdown)
+    children = []
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        if block_type == BlockType.PARAGRAPH:
+            children.append(paragraph_to_html_node(block))
+        elif block_type == BlockType.HEADING:
+            children.append(heading_to_html_node(block))
+        elif block_type == BlockType.CODE:
+            children.append(code_to_html_node(block))
+        elif block_type == BlockType.QUOTE:
+            children.append(quote_to_html_node(block))
+        elif block_type == BlockType.UNORDERED_LIST:
+            children.append(ulist_to_html_node(block))
+        elif block_type == BlockType.ORDERED_LIST:
+            children.append(olist_to_html_node(block))
+        else:
+            raise ValueError(f"Unknown block type: {block_type}")
+
+    return ParentNode("div", children)
+
+def paragraph_to_html_node(block:str):
+    children = text_to_children(block.replace("\n", " "))
+    return ParentNode("p", children)
+
+def heading_to_html_node(block:str):
+    heading_intensity = len(block) - len(block.lstrip("#"))
+    if heading_intensity > 6 or heading_intensity == 0:
+        raise ValueError("Incorrect heading level")
+    clean_block = block[heading_intensity + 1:]
+    if len(clean_block) < 1:
+        raise ValueError("Heading specified but no text to apply it to")
+    heading_tag = f"h{heading_intensity}"
+    children = text_to_children(clean_block)
+    return ParentNode(heading_tag, children)
+
+def code_to_html_node(block):
+    if not block.startswith("```") or not block.endswith("```"):
+        raise ValueError("Invalid code block")
+    cleanblock = block[4:-3]
+    leafnode = text_node_to_html_node(TextNode(cleanblock, TextType.TEXT))
+    codenode = ParentNode("code", [leafnode])
+    return ParentNode("pre", [codenode])
+
+def quote_to_html_node(block):
+    lines = block.split("\n")
+    clean_lines = []
+    for line in lines:
+        if not line.startswith(">"):
+            raise ValueError("Quote block line was missing markdown")
+        clean_line = line.lstrip(">").strip()
+        clean_lines.append(clean_line)
+
+    combined_quote = " ".join(clean_lines)
+    children = text_to_children(combined_quote)
+    return ParentNode("blockquote", children)
+    
+
+def ulist_to_html_node(block):
+    lines = block.split("\n")
+    children = []
+    for line in lines:
+        clean_line = line[2:]
+        inner_children = text_to_children(clean_line)
+        children.append(ParentNode("li", inner_children))
+    return ParentNode("ul", children)
+
+def olist_to_html_node(block):
+    lines = block.split("\n")
+    children = []
+    for line in lines:
+        clean_line = line.split(". ", 1)[1]
+        inner_children = text_to_children(clean_line)
+        children.append(ParentNode("li", inner_children))
+    return ParentNode("ol", children)

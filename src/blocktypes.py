@@ -22,7 +22,7 @@ def markdown_to_blocks(markdown):
 def block_to_block_type(block):
     if re.match(r"#{1,6} .+", block):
         return BlockType.HEADING
-    if re.match(r"`{3}\n[\w\d\s]*`{3}", block):
+    if re.match(r"^```\n[\s\S]*?\n```$", block):
         return BlockType.CODE
     if re.match(r"> ?.+", block):
         lines = block.split("\n")
@@ -38,12 +38,12 @@ def block_to_block_type(block):
             match |= re.match(r"- ", line) != None
         if match:
             return BlockType.UNORDERED_LIST
-    if re.match(r"\d+. ", block):
+    if re.match(r"\d+\.", block):
         lines = block.split("\n")
         increment = 1
-        match = False
+        match = True
         for line in lines:
-            match |= re.match(fr"{increment}\. ", line) != None
+            match &= re.match(fr"{increment}\. ", line) != None
             increment += 1
         if match:
             return BlockType.ORDERED_LIST

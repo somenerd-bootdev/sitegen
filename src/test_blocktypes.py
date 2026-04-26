@@ -28,7 +28,13 @@ This is the same paragraph on a new line
         self.assertEqual(block_type, BlockType.HEADING)
 
     def test_block_type_code(self):
-        block_type = block_to_block_type("""```\ncode\nmore code\nbonus code```""")
+        block_type = block_to_block_type("""
+```
+code
+more code
+bonus code
+```
+        """.strip())
         self.assertEqual(block_type, BlockType.CODE)
 
     def test_block_type_quote(self):
