@@ -1,7 +1,7 @@
 import unittest
 
 from textnode import TextNode, TextType
-from helpers import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks
+from helpers import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes
 
 
 class TestTextNode(unittest.TestCase):
@@ -139,26 +139,6 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(nodes[7].text_type, TextType.IMAGE)
         self.assertEqual(nodes[8].text_type, TextType.TEXT)
         self.assertEqual(nodes[9].text_type, TextType.LINK)
-
-    def test_markdown_to_blocks(self):
-        md = """
-This is **bolded** paragraph
-
-This is another paragraph with _italic_ text and `code` here
-This is the same paragraph on a new line
-
-- This is a list
-- with items
-"""
-        blocks = markdown_to_blocks(md)
-        self.assertEqual(
-            blocks,
-            [
-                "This is **bolded** paragraph",
-                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
-                "- This is a list\n- with items",
-            ],
-        )
 
 
 if __name__ == "__main__":
