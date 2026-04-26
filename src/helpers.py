@@ -41,20 +41,64 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 def extract_markdown_images(text):
-    hits = re.findall(r"!\[.*?\]\(.*?\)", text)
-    results = []
-    for hit in hits:
-        hit = re.sub("!", "", hit)
-        front = re.sub(r"\(.*?\)", "", hit)
-        back = re.sub(r"\[.*?\]", "", hit)
-        results.append((f"{front[1:len(front)-1]}", f"{back[1:len(back)-1]}"))
-    return results
+    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
 
 def extract_markdown_links(text):
-    hits = re.findall(r"\[.*?\]\(.*?\)", text)
-    results = []
-    for hit in hits:
-        front = re.sub(r"\(.*?\)", "", hit)
-        back = re.sub(r"\[.*?\]", "", hit)
-        results.append((f"{front[1:len(front)-1]}", f"{back[1:len(back)-1]}"))
-    return results
+    pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT: # Don't process it if it's already a specific non-text type
+            new_nodes.append(old_node)
+        else: # Time to split
+            original_text = old_node.text
+            remaining_text = original_text
+            extracted_images = extract_markdown_images(original_text)
+            split_nodes = []
+            for i in range(len(extracted_images)):
+                image_alt = extracted_images[i][0]
+                image_link = extracted_images[i][1]
+                split_strings = remaining_text.split(f"![{image_alt}]({image_link})", 1)
+                if (split_strings[0] == ""):
+                    split_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+                else:
+                    split_nodes.append(TextNode(split_strings[0], TextType.TEXT))
+                    split_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+                remaining_text = split_strings[1]
+            if remaining_text != "":
+                split_nodes.append(TextNode(remaining_text, TextType.TEXT))
+            new_nodes.extend(split_nodes)
+
+    return new_nodes
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT: # Don't process it if it's already a specific non-text type
+            new_nodes.append(old_node)
+        else: # Time to split
+            original_text = old_node.text
+            remaining_text = original_text
+            extracted_links = extract_markdown_links(original_text)
+            split_nodes = []
+            for i in range(len(extracted_links)):
+                link_text = extracted_links[i][0]
+                link_url = extracted_links[i][1]
+                split_strings = remaining_text.split(f"[{link_text}]({link_url})", 1)
+                if (split_strings[0] == ""):
+                    split_nodes.append(TextNode(link_text, TextType.LINK, link_url))
+                else:
+                    split_nodes.append(TextNode(split_strings[0], TextType.TEXT))
+                    split_nodes.append(TextNode(link_text, TextType.LINK, link_url))
+                if (len(split_strings) > 1):
+                    remaining_text = split_strings[1]
+            if remaining_text != "":
+                split_nodes.append(TextNode(remaining_text, TextType.TEXT))
+            new_nodes.extend(split_nodes)
+
+    return new_nodes
