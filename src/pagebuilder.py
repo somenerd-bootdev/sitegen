@@ -1,5 +1,6 @@
 import os, shutil
 from helpers import markdown_to_html_node
+from pathlib import Path
 
 def copy_dir(source, destination):
     if not os.path.exists(source):
@@ -19,7 +20,7 @@ def extract_title(markdown:str):
     if not markdown.startswith("# "):
         raise ValueError("Markdown lacks a top heading")
     lines = markdown.split("\n")
-    return lines[0].lstrip("# ") # We already proved there's at least one line
+    return lines[0].lstrip("# ")
     
 def generate_page(from_path, template_path, dest_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
@@ -32,3 +33,16 @@ def generate_page(from_path, template_path, dest_path):
     if not os.path.exists(os.path.dirname(dest_path)):
         os.makedirs(os.path.dirname(dest_path))
     open(dest_path, "w").write(template)
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    contents = os.listdir(dir_path_content)
+    for content in contents:
+        content_dir_path = os.path.join(dir_path_content, content)
+        next_dest_dir_path = os.path.join(dest_dir_path, content)
+        if os.path.isfile(content_dir_path):
+            if content.endswith(".md"):
+                md_dest_dir_path = Path(next_dest_dir_path).with_suffix(".html")
+                generate_page(content_dir_path, template_path, md_dest_dir_path)
+        else:
+            generate_pages_recursive(content_dir_path, template_path, next_dest_dir_path)
+        
