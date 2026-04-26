@@ -1,5 +1,5 @@
 from textnode import TextNode, TextType
-from pagebuilder import copy_dir
+from pagebuilder import copy_dir, generate_page
 import os, shutil
 
 
@@ -10,5 +10,6 @@ def main():
     if os.path.exists(destination):
         shutil.rmtree(destination)
     copy_dir("static", destination)
+    generate_page("content/index.md", "template.html", "public/index.html")
 
 main()
