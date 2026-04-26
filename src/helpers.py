@@ -19,6 +19,16 @@ def text_node_to_html_node(text_node):
         case _:
             raise ValueError("Node type was not in the allowed set")
 
+def extract_markdown_images(text):
+    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
+
+def extract_markdown_links(text):
+    pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
+
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
     for old_node in old_nodes:
@@ -39,16 +49,6 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             new_nodes.extend(split_nodes)
 
     return new_nodes
-
-def extract_markdown_images(text):
-    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
-    matches = re.findall(pattern, text)
-    return matches
-
-def extract_markdown_links(text):
-    pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
-    matches = re.findall(pattern, text)
-    return matches
 
 def split_nodes_image(old_nodes):
     new_nodes = []
@@ -102,3 +102,15 @@ def split_nodes_link(old_nodes):
             new_nodes.extend(split_nodes)
 
     return new_nodes
+
+def text_to_textnodes(text):
+    initial_node = TextNode(text, TextType.TEXT)
+    nodes = []
+    nodes.append(initial_node)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+
+    return nodes
